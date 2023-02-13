@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'"> -->
+    <title>Livekit APP</title>
+
+    <style>
+        html,
+        body {
+            height: 100;
+            margin: 0;
+        }
+
+        video {
+            width: 640px;
+            height: 480px;
+        }
+    </style>
+</head>
+
+<body>
+    <video id="localVideo"></video>
+    <hr>
+    <button id="connect">Connect</button>
+    <button id="disconnect">Disconnect</button>
+    <button id="publish">Publish</button>
+    <button id="unpublish">Unpublish</button>
+
+    <script src="livekit-client.umd.js"></script>
+    <script src="./renderer.js" type="module"></script>
+</body>
+
+</html>

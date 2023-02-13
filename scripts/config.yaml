@@ -1,0 +1,17 @@
+port: 7880
+
+log_level: info
+
+keys:
+  mycat: mk3ixztvnk3k1kgo0sr1zqh4rb0aqoge
+
+room:
+   empty_timeout: 300
+   max_participants: 0
+   enabled_codecs:
+     - mime: audio/opus
+     - mime: video/vp8
+     - mime: video/h264
+   enable_remote_unmute: true
+   max_metadata_size: 0
+  

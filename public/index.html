@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Livekit</title>
+
+    <style>
+        html,
+        body {
+            height: 100;
+            margin: 0;
+        }
+
+        video {
+            width: 100%;
+            background-color: lightslategray;
+        }
+    </style>
+</head>
+
+<body>
+    <video id="remoteVideo"></video>
+    <hr>
+    <button id="connect">Connect</button>
+    <button id="disconnect">Disconnect</button>
+
+    <script src="livekit-client.umd.js"></script>
+
+    <script type="module">
+        const remoteVideo = document.getElementById("remoteVideo"),
+            connectButton = document.getElementById("connect"),
+            disconnectButton = document.getElementById("disconnect");
+
+        const remoteStream = new MediaStream();
+        remoteStream.muted = true;
+        remoteVideo.srcObject = remoteStream;
+        remoteVideo.onloadedmetadata = (event) => remoteVideo.play();
+
+        let livekitRoom = null;
+
+        connectButton.addEventListener("click", async () => {
+            const roomOptions = {
+                adaptiveStream: false,
+                dynacast: false,
+                videoCaptureDefaults: {},
+            };
+
+            livekitRoom = new LivekitClient.Room(roomOptions);
+
+            const roomName = 'mycat-room',
+                participantName = 'mycat/subscriber:' + new Date().getTime();
+
+            const livekitToken = await createAccessToken(roomName, participantName),
+                livekitServer = "ws://192.168.31.248:7880";
+
+
+            console.log("RoomName:", roomName);
+            console.log("ParticipantName:", participantName);
+            console.log("Token:", livekitToken)
+            console.log("Server:", livekitServer);
+
+            const roomConnectOptions = {
+                autoSubscribe: false,
+            };
+
+            await livekitRoom.connect(livekitServer, livekitToken, roomConnectOptions);
+            console.log("Connected");
+
+            for (const [sid, remoteParticipant] of livekitRoom.participants) {
+                for (const [sid, remoteTrackPublication] of remoteParticipant.videoTracks) {
+                    remoteTrackPublication.setSubscribed(true);
+                }
+            }
+
+            livekitRoom
+                .on(LivekitClient.RoomEvent.TrackSubscribed, handleTrackSubscribed)
+                .on(LivekitClient.RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed)
+
+                .on(LivekitClient.RoomEvent.ActiveSpeakersChanged, handleActiveSpeakerChange)
+
+                .on(LivekitClient.RoomEvent.Connected, handleConnect)
+                .on(LivekitClient.RoomEvent.Disconnected, handleDisconnect)
+
+                .on(LivekitClient.RoomEvent.TrackPublished, handleTrackPublished)
+                .on(LivekitClient.RoomEvent.TrackUnpublished, handleTrackUnpublished)
+
+                .on(LivekitClient.RoomEvent.LocalTrackPublished, handleLocalTrackPublished)
+                .on(LivekitClient.RoomEvent.LocalTrackUnpublished, handleLocalTrackUnpublished);
+        });
+
+        disconnectButton.addEventListener("click", async () => {
+
+        });
+
+        async function handleConnect() {
+            console.log("Connected.");
+        }
+
+        async function handleTrackSubscribed(track, publication, participant) {
+            console.log("TrackSubscribed:", track.kind);
+            remoteStream.addTrack(track.mediaStreamTrack);
+
+            if (track.kind == LivekitClient.Track.Kind.Video) {
+            }
+        }
+
+        async function handleTrackUnsubscribed(track, publication, participant) {
+            console.log("TrackUnsubscribed\n");
+            for (const mediaTrack of remoteStream.getTracks()) {
+                remoteStream.removeTrack(mediaTrack);
+            }
+        }
+
+        async function handleActiveSpeakerChange(speakers) { }
+
+        async function handleDisconnect() {
+            console.log("Disconnect");
+        }
+
+        async function handleTrackUnpublished(remoteTrackPublication, remoteParticipant) {
+            console.log("TrackUnpublished\n");
+        }
+
+        async function handleTrackPublished(remoteTrackPublication, remoteParticipant) {
+            console.log("TrackPublished\n");
+            remoteTrackPublication.setSubscribed(true);
+        }
+
+        async function handleLocalTrackUnpublished(track, participant) {
+            console.log("LocalTrackUnpublished\n");
+        }
+
+        async function handleLocalTrackPublished(track, participant) {
+            console.log("LocalTrackPublished\n");
+        }
+
+        async function createAccessToken(roomName, participantName) {
+            const response = await fetch("/createToken", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    roomName,
+                    participantName,
+                })
+            });
+            return response.text();
+        }
+
+    </script>
+</body>
+
+</html>

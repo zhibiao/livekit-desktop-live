@@ -1,0 +1,1 @@
+livekit-cli list-rooms --api-key mycat --api-secret "mk3ixztvnk3k1kgo0sr1zqh4rb0aqoge"
